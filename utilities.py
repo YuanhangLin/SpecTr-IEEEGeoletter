@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Jul 28 16:07:37 2020
-
-@author: yuanhanglin
-"""
-
 #%%
 from scipy.io import loadmat
 import numpy as np
@@ -49,9 +41,9 @@ def get_spectra_polygonname_coordinate(date, path = "../data/"):
     data = pd.read_csv(path + date + "_AVIRIS_speclib_subset_spectra.csv")
     polygon_names = data['PolygonName'].values
     spectra = data.values[:,5:]
-    spectra = spectra[:, bbl == 1] # remove water bands
+    spectra = spectra[:, bbl == 1] # remove water and bad bands
     spectra = spectra / 10000
-    spectra = spectra[:, 2:] # first two bands are zero bands, 176 to 174
+    spectra = spectra[:, 2:] # first two bands are zero bands
     spectra[spectra < 0] = 0
     spectra[spectra > 1] = 1 
     
@@ -177,37 +169,3 @@ def cross_date_testing(num_round, date_pair, clf_pair, spectra_pair,
     print(num_round, Ta, "test", Tb, Tb2Ta_accuracy, mapping_method)
     print(num_round, Tb, "test", Ta, Ta2Tb_accuracy, mapping_method)
     
-
-#%% linear mapping
-dates = ["130411", "130606", "131125",
-         "140416", "140600", "140829",
-         "150416", "150602", "150824"]
-
-
-# generate 36 cross-date pairs by permutation 
-pairs = list(combinations(dates, 2))
-
-mapping_method = ["no-mapping", "linear-transformation", 
-                  "affine-transformation", "decision-tree", "random-forest"]
-
-import warnings
-warnings.simplefilter("ignore")
-
-
-"""
-    Test how long does it takes to get 
-    36(date pairs, choose 2 out of 9 dates) x 2(bidirectional) = 72 mapping models.
-"""
-
-mappings = []
-
-for Ta, Tb in pairs:
-    #%% select 20% of common polygons
-    X_Ta, X_Tb, polygons_for_mapping = construct_pair(Ta, Tb)
-    
-    #%% PixMatch
-    # affine transformation
-    Ta2Tb_affine = LinearRegression()
-    Tb2Ta_affine = LinearRegression()
-    Ta2Tb_affine.fit(X_Ta, X_Tb)
-    Tb2Ta_affine.fit(X_Tb, X_Ta)
